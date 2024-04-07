@@ -5,7 +5,7 @@ import (
 	"net"
 	"os"
 	"strconv"
-	s "strings"
+	"strings"
 )
 
 func main() {
@@ -24,17 +24,23 @@ func main() {
 	con.Read(req)
 	parsedResponse := string(req)
 
-	if s.HasPrefix(parsedResponse, "GET /echo/") {
-		param := s.Split(parsedResponse, " ")
-		url := s.TrimPrefix(param[1], "/echo/")
+	if strings.HasPrefix(parsedResponse, "GET /echo/") {
+		param := strings.Split(parsedResponse, " ")
+		url := strings.TrimPrefix(param[1], "/echo/")
 		resp := []byte("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-length: " + strconv.Itoa(len(url)) + "\r\n\r\n" + url)
 		con.Write(resp)
-	} else if s.HasPrefix(parsedResponse, "GET /user-agent") {
-		param := s.Split(parsedResponse, " ")
-		url := s.TrimPrefix(param[len(param)-1], "User-Agent:")
+	} else if strings.HasPrefix(parsedResponse, "GET /user-agent") {
+		param := strings.Split(parsedResponse, "\r\n")
+		var url string
+		for i, v := range param {
+			if strings.HasPrefix(v, "User-Agent: ") {
+				url = strings.TrimPrefix(param[i], "User-Agent: ")
+				break
+			}
+		}
 		resp := []byte("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-length: " + strconv.Itoa(len(url)) + "\r\n\r\n" + url)
 		con.Write(resp)
-	} else if s.Contains(parsedResponse, "GET / ") {
+	} else if strings.Contains(parsedResponse, "GET / ") {
 		resp := []byte("HTTP/1.1 200 OK\r\n\r\n")
 		con.Write(resp)
 	} else {
