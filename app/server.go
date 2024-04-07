@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"strconv"
 	s "strings"
 )
 
@@ -26,7 +27,7 @@ func main() {
 	if s.HasPrefix(parsedResponse, "GET /echo/") {
 		param := s.Split(parsedResponse, " ")
 		url := s.TrimPrefix(param[1], "/echo/")
-		resp := []byte("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n Content-length: " + string(rune(len(url))) + "\r\n\r\n" + url)
+		resp := []byte("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-length: " + strconv.Itoa(len(url)) + "\r\n\r\n" + url)
 		con.Write(resp)
 	} else if s.Contains(parsedResponse, "GET / ") {
 		resp := []byte("HTTP/1.1 200 OK\r\n\r\n")
