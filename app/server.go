@@ -29,6 +29,11 @@ func main() {
 		url := s.TrimPrefix(param[1], "/echo/")
 		resp := []byte("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-length: " + strconv.Itoa(len(url)) + "\r\n\r\n" + url)
 		con.Write(resp)
+	} else if s.HasPrefix(parsedResponse, "GET /user-agent") {
+		param := s.Split(parsedResponse, " ")
+		url := s.TrimPrefix(param[len(param)-1], "User-Agent:")
+		resp := []byte("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-length: " + strconv.Itoa(len(url)) + "\r\n\r\n" + url)
+		con.Write(resp)
 	} else if s.Contains(parsedResponse, "GET / ") {
 		resp := []byte("HTTP/1.1 200 OK\r\n\r\n")
 		con.Write(resp)
