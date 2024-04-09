@@ -43,6 +43,7 @@ func handleConnection(con net.Conn) {
 		path := flag.String("directory", "", "path to file")
 		param := strings.Split(parsedResponse, " ")
 		url := strings.TrimPrefix(param[1], "/files/")
+		fmt.Printf("eroooor", path)
 		filePath := *path + `/` + url
 		fi, err := os.ReadFile(filePath)
 		if err != nil {
