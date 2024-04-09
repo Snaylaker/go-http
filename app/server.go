@@ -60,8 +60,10 @@ func handleConnection(con net.Conn) {
 }
 
 func main() {
-	path := *flag.String("directory", "", "path to file")
-	fmt.Printf("here is the path", path)
+	path := flag.String("directory", "", "path to file")
+	flag.Parse()
+	fmt.Print("here is the path", *path)
+
 	l, err := net.Listen("tcp", "0.0.0.0:4221")
 	if err != nil {
 		fmt.Println("Failed to bind to port 4221:", err)
