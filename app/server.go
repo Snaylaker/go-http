@@ -56,7 +56,8 @@ func handleConnection(con net.Conn, path string) {
 		for i, v := range param {
 			fmt.Println("testint", i, v)
 		}
-		url := strings.TrimPrefix(param[1], "/files/")
+		tmp := strings.Split(param[1], " ")
+		url := strings.TrimPrefix(tmp[0], "/files/")
 		filePath := path + `/` + url
 		response = "HTTP/1.1 201 OK\r\n\r\n"
 		d1 := []byte(param[6])
