@@ -56,6 +56,7 @@ func handleConnection(con net.Conn) {
 		response = "HTTP/1.1 404 Not Found\r\n\r\n"
 		con.Write([]byte(response))
 	}
+	fmt.Print(strings.Contains(parsedResponse, "GET /files/ "))
 
 }
 
