@@ -40,7 +40,7 @@ func handleConnection(con net.Conn) {
 	} else if strings.Contains(parsedResponse, "GET / ") {
 		response = "HTTP/1.1 200 OK\r\n\r\n"
 		con.Write([]byte(response))
-	} else if strings.Contains(parsedResponse, "GET /files/ ") {
+	} else if strings.HasPrefix(parsedResponse, "GET /files/ ") {
 		fmt.Printf("hi")
 		path := flag.String("directory", "", "path to file")
 		param := strings.Split(parsedResponse, " ")
