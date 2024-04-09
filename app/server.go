@@ -52,8 +52,8 @@ func handleConnection(con net.Conn, path string) {
 			con.Write(append([]byte(response), fi...))
 		}
 	} else if strings.HasPrefix(parsedResponse, "POST /files/") {
-		param := strings.Split(parsedResponse, " ")
-		fmt.Println("testint", param[6])
+		param := strings.Split(parsedResponse, "\r\n")
+		fmt.Println("testint", param[7])
 		url := strings.TrimPrefix(param[1], "/files/")
 		filePath := path + `/` + url
 		response = "HTTP/1.1 201 OK\r\n\r\n"
