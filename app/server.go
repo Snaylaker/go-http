@@ -41,6 +41,7 @@ func handleConnection(con net.Conn) {
 		con.Write([]byte(response))
 	} else if strings.HasPrefix(parsedResponse, "GET /files/") {
 		path := *flag.String("directory", "", "path to file")
+		flag.Parse()
 		param := strings.Split(parsedResponse, " ")
 		url := strings.TrimPrefix(param[1], "/files/")
 		fmt.Printf("eroooor", path)
@@ -60,10 +61,6 @@ func handleConnection(con net.Conn) {
 }
 
 func main() {
-	path := flag.String("directory", "", "path to file")
-	flag.Parse()
-	fmt.Print("here is the path", *path)
-
 	l, err := net.Listen("tcp", "0.0.0.0:4221")
 	if err != nil {
 		fmt.Println("Failed to bind to port 4221:", err)
