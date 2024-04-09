@@ -40,11 +40,11 @@ func handleConnection(con net.Conn) {
 		response = "HTTP/1.1 200 OK\r\n\r\n"
 		con.Write([]byte(response))
 	} else if strings.HasPrefix(parsedResponse, "GET /files/") {
-		path := flag.String("directory", "", "path to file")
+		path := *flag.String("directory", "", "path to file")
 		param := strings.Split(parsedResponse, " ")
 		url := strings.TrimPrefix(param[1], "/files/")
-		fmt.Printf("eroooor", *path)
-		filePath := *path + `/` + url
+		fmt.Printf("eroooor", path)
+		filePath := path + `/` + url
 		fi, err := os.ReadFile(filePath)
 		if err != nil {
 			fmt.Printf("eroooor", filePath)
