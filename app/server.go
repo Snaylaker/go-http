@@ -54,12 +54,9 @@ func main() {
 
 	fmt.Println("Server started, listening on port 4221")
 
-	for {
-		con, err := l.Accept()
-		if err != nil {
-			fmt.Println("Error accepting connection:", err)
-			continue
-		}
-		go handleConnection(con) // Handle each connection concurrently
+	con, err := l.Accept()
+	if err != nil {
+		fmt.Println("Error accepting connection:", err)
 	}
+	go handleConnection(con)
 }
