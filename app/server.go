@@ -53,15 +53,18 @@ func handleConnection(con net.Conn, path string) {
 		}
 	} else if strings.HasPrefix(parsedResponse, "POST /files/") {
 		param := strings.Split(parsedResponse, " ")
-		fmt.Println("testint", param)
+		fmt.Println("testint", param[6])
 		url := strings.TrimPrefix(param[1], "/files/")
 		filePath := path + `/` + url
 		if err != nil {
-			response = "HTTP/1.1 404 Not Found\r\n\r\n"
+
 			con.Write([]byte(response))
 		} else {
 			response = "HTTP/1.1 201 OK\r\n\r\n"
-			os.WriteFile(filePath, []byte(param[6]), 0644)
+			err := os.WriteFile(filePath, []byte(param[6]), 0644)
+			if err != nil {
+				response = "HTTP/1.1 404 Not Found\r\n\r\n"
+			}
 			con.Write([]byte(response))
 		}
 	} else {
