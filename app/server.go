@@ -25,6 +25,7 @@ func handleConnection(con net.Conn) {
 		param := strings.Split(parsedResponse, " ")
 		url := strings.TrimPrefix(param[1], "/echo/")
 		response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: " + strconv.Itoa(len(url)) + "\r\n\r\n" + url
+		con.Write([]byte(response))
 	} else if strings.HasPrefix(parsedResponse, "GET /user-agent") {
 		param := strings.Split(parsedResponse, "\r\n")
 		var url string
@@ -35,23 +36,27 @@ func handleConnection(con net.Conn) {
 			}
 		}
 		response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: " + strconv.Itoa(len(url)) + "\r\n\r\n" + url
+		con.Write([]byte(response))
 	} else if strings.Contains(parsedResponse, "GET / ") {
 		response = "HTTP/1.1 200 OK\r\n\r\n"
+		con.Write([]byte(response))
 	} else if strings.Contains(parsedResponse, "GET /files/ ") {
+		fmt.Printf("hi")
 		path := flag.String("directory", "", "path to file")
 		param := strings.Split(parsedResponse, " ")
 		url := strings.TrimPrefix(param[1], "/files/")
 		filePath := *path + `/` + url
 		fi, err := os.ReadFile(filePath)
 		if err == nil {
-			response = "HTTP/1.1 200 OK\r\napplication/octet-stream\r\n\r\n"
+			fmt.Printf("worked")
+			response = "HTTP/1.1 200 OK\r\napplication/octet-stream\r\nContent-Length:\r\n" + strconv.Itoa(len(fi)) + "\r\n\r\n"
 			con.Write(append([]byte(response), fi...))
 		}
 	} else {
 		response = "HTTP/1.1 404 Not Found\r\n\r\n"
+		con.Write([]byte(response))
 	}
 
-	con.Write([]byte(response))
 }
 
 func main() {
