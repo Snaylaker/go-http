@@ -56,12 +56,12 @@ func handleConnection(con net.Conn, path string) {
 		for i, v := range param {
 			fmt.Println("testint", i, v)
 		}
-		tmp := strings.Split(param[1], " ")
+		tmp := strings.Split(param[0], " ")
 		url := strings.TrimPrefix(tmp[0], "/files/")
 		filePath := path + `/` + url
+		fmt.Print(filePath)
 		response = "HTTP/1.1 201 OK\r\n\r\n"
 		d1 := []byte(param[6])
-		fmt.Print(filePath)
 		err := os.WriteFile(filePath, d1, 0644)
 		if err != nil {
 			response = "HTTP/1.1 404 Not Found\r\n\r\n"
