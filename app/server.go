@@ -51,12 +51,13 @@ func handleConnection(con net.Conn) {
 			response = "HTTP/1.1 200 OK\r\napplication/octet-stream\r\nContent-Length:\r\n" + strconv.Itoa(len(fi)) + "\r\n\r\n"
 			con.Write(append([]byte(response), fi...))
 		}
+
+		response = "HTTP/1.1 404 Not Found\r\n\r\n"
+		con.Write([]byte(response))
 	} else {
 		response = "HTTP/1.1 404 Not Found\r\n\r\n"
 		con.Write([]byte(response))
 	}
-	fmt.Print(strings.Contains(parsedResponse, "GET /files/ "))
-
 }
 
 func main() {
