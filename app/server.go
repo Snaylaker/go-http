@@ -62,6 +62,7 @@ func handleConnection(con net.Conn, path string) {
 		} else {
 			response = "HTTP/1.1 201 OK\r\n\r\n"
 			os.WriteFile(filePath, []byte(param[6]), 0644)
+			con.Write([]byte(response))
 		}
 	} else {
 		response = "HTTP/1.1 404 Not Found\r\n\r\n"
