@@ -44,8 +44,8 @@ func handleConnection(con net.Conn) {
 		flag.Parse()
 		param := strings.Split(parsedResponse, " ")
 		url := strings.TrimPrefix(param[1], "/files/")
-		fmt.Printf("eroooor", path)
 		filePath := path + `/` + url
+		fmt.Print(filePath)
 		fi, err := os.ReadFile(filePath)
 		if err != nil {
 			response = "HTTP/1.1 404 Not Found\r\n\r\n"
