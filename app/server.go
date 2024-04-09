@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"net"
 	"os"
@@ -18,7 +19,6 @@ func handleConnection(con net.Conn) {
 		return
 	}
 	parsedResponse := string(req[:n])
-
 	var response string
 
 	if strings.HasPrefix(parsedResponse, "GET /echo/") {
@@ -37,6 +37,16 @@ func handleConnection(con net.Conn) {
 		response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: " + strconv.Itoa(len(url)) + "\r\n\r\n" + url
 	} else if strings.Contains(parsedResponse, "GET / ") {
 		response = "HTTP/1.1 200 OK\r\n\r\n"
+	} else if strings.Contains(parsedResponse, "GET /files/ ") {
+		path := flag.String("directory", "", "path to file")
+		param := strings.Split(parsedResponse, " ")
+		url := strings.TrimPrefix(param[1], "/files/")
+		filePath := *path + `/` + url
+		fi, err := os.ReadFile(filePath)
+		if err == nil {
+			response = "HTTP/1.1 200 OK\r\napplication/octet-stream\r\n\r\n"
+			con.Write(append([]byte(response), fi...))
+		}
 	} else {
 		response = "HTTP/1.1 404 Not Found\r\n\r\n"
 	}
@@ -54,9 +64,12 @@ func main() {
 
 	fmt.Println("Server started, listening on port 4221")
 
-	con, err := l.Accept()
-	if err != nil {
-		fmt.Println("Error accepting connection:", err)
+	for {
+		con, err := l.Accept()
+		if err != nil {
+			fmt.Println("Error accepting connection:", err)
+			continue
+		}
+		go handleConnection(con)
 	}
-	go handleConnection(con)
 }
