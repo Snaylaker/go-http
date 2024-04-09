@@ -42,10 +42,10 @@ func handleConnection(con net.Conn) {
 	} else if strings.HasPrefix(parsedResponse, "GET /files/") {
 		path := *flag.String("directory", "", "path to file")
 		flag.Parse()
+		fmt.Print(" path ", path)
 		param := strings.Split(parsedResponse, " ")
 		url := strings.TrimPrefix(param[1], "/files/")
 		filePath := path + `/` + url
-		fmt.Print(path, "    ", filePath)
 		fi, err := os.ReadFile(filePath)
 		if err != nil {
 			response = "HTTP/1.1 404 Not Found\r\n\r\n"
