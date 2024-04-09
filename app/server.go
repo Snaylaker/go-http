@@ -56,10 +56,6 @@ func handleConnection(con net.Conn, path string) {
 		fmt.Println("testint", param[6])
 		url := strings.TrimPrefix(param[1], "/files/")
 		filePath := path + `/` + url
-		if err != nil {
-
-			con.Write([]byte(response))
-		} else {
 			response = "HTTP/1.1 201 OK\r\n\r\n"
 			err := os.WriteFile(filePath, []byte(param[6]), 0644)
 			if err != nil {
