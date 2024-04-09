@@ -48,7 +48,7 @@ func handleConnection(con net.Conn, path string) {
 			response = "HTTP/1.1 404 Not Found\r\n\r\n"
 			con.Write([]byte(response))
 		} else {
-			response = "HTTP/1.1 200 OK\r\napplication/octet-stream\r\nContent-Length:\r\n" + strconv.Itoa(len(fi)) + "\r\n\r\n"
+			response = "HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length:\r\n" + strconv.Itoa(len(fi)) + "\r\n\r\n"
 			con.Write(append([]byte(response), fi...))
 		}
 	} else {
