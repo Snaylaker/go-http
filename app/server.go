@@ -55,18 +55,18 @@ func handleConnection(con net.Conn, path string) {
 		}
 	} else if strings.HasPrefix(parsedResponse, "POST /files/") {
 		fmt.Print("hello")
-		param := strings.Split(parsedResponse, " ")
-		fmt.Print(param)
-		url := strings.TrimPrefix(param[1], "/files/")
-		filePath := path + `/` + url
-		fi, err := os.ReadFile(filePath)
-		if err != nil {
-			response = "HTTP/1.1 404 Not Found\r\n\r\n"
-			con.Write([]byte(response))
-		} else {
-			response = "HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: " + strconv.Itoa(len(fi)) + "\r\n\r\n"
-			con.Write(append([]byte(response), fi...))
-		}
+		// param := strings.Split(parsedResponse, " ")
+		// fmt.Print(param)
+		// url := strings.TrimPrefix(param[1], "/files/")
+		// filePath := path + `/` + url
+		// fi, err := os.ReadFile(filePath)
+		// if err != nil {
+		// 	response = "HTTP/1.1 404 Not Found\r\n\r\n"
+		// 	con.Write([]byte(response))
+		// } else {
+		// 	response = "HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: " + strconv.Itoa(len(fi)) + "\r\n\r\n"
+		// 	con.Write(append([]byte(response), fi...))
+		// }
 	} else {
 		response = "HTTP/1.1 404 Not Found\r\n\r\n"
 		con.Write([]byte(response))
