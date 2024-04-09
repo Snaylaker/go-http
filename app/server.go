@@ -20,7 +20,7 @@ func handleConnection(con net.Conn) {
 	}
 	parsedResponse := string(req[:n])
 	var response string
-
+	fmt.Printf(parsedResponse)
 	if strings.HasPrefix(parsedResponse, "GET /echo/") {
 		param := strings.Split(parsedResponse, " ")
 		url := strings.TrimPrefix(param[1], "/echo/")
