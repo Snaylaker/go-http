@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-func handleConnection(con net.Conn) {
+func handleConnection(con net.Conn, path string) {
 	defer con.Close()
 
 	req := make([]byte, 1024)
@@ -40,9 +40,6 @@ func handleConnection(con net.Conn) {
 		response = "HTTP/1.1 200 OK\r\n\r\n"
 		con.Write([]byte(response))
 	} else if strings.HasPrefix(parsedResponse, "GET /files/") {
-		path := *flag.String("directory", "", "path to file")
-		flag.Parse()
-		fmt.Print(" path ", path)
 		param := strings.Split(parsedResponse, " ")
 		url := strings.TrimPrefix(param[1], "/files/")
 		filePath := path + `/` + url
@@ -61,9 +58,9 @@ func handleConnection(con net.Conn) {
 }
 
 func main() {
-	path := *flag.String("directory", "tfk", "path to file")
+	path := flag.String("directory", "tfk", "path to file")
 	flag.Parse()
-	fmt.Println(" path :", path)
+	fmt.Println(" path :", *path)
 
 	l, err := net.Listen("tcp", "0.0.0.0:4221")
 	if err != nil {
@@ -80,6 +77,6 @@ func main() {
 			fmt.Println("Error accepting connection:", err)
 			continue
 		}
-		go handleConnection(con)
+		go handleConnection(con, *path)
 	}
 }
