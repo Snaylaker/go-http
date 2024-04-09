@@ -7,6 +7,8 @@ import (
 	"os"
 	"strconv"
 	"strings"
+
+	"honnef.co/go/tools/printf"
 )
 
 func handleConnection(con net.Conn, path string) {
@@ -52,6 +54,7 @@ func handleConnection(con net.Conn, path string) {
 			con.Write(append([]byte(response), fi...))
 		}
 	} else if strings.HasPrefix(parsedResponse, "POST /files/") {
+		fmt.Print("hello")
 		param := strings.Split(parsedResponse, " ")
 		fmt.Print(param)
 		url := strings.TrimPrefix(param[1], "/files/")
