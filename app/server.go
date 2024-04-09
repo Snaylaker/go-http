@@ -40,17 +40,16 @@ func handleConnection(con net.Conn) {
 		response = "HTTP/1.1 200 OK\r\n\r\n"
 		con.Write([]byte(response))
 	} else if strings.HasPrefix(parsedResponse, "GET /files/") {
-		fmt.Printf("hi")
 		path := flag.String("directory", "", "path to file")
 		param := strings.Split(parsedResponse, " ")
 		url := strings.TrimPrefix(param[1], "/files/")
 		filePath := *path + `/` + url
 		fi, err := os.ReadFile(filePath)
 		if err != nil {
+			fmt.Printf("eroooor", filePath)
 			response = "HTTP/1.1 404 Not Found\r\n\r\n"
 			con.Write([]byte(response))
 		} else {
-
 			response = "HTTP/1.1 200 OK\r\napplication/octet-stream\r\nContent-Length:\r\n" + strconv.Itoa(len(fi)) + "\r\n\r\n"
 			con.Write(append([]byte(response), fi...))
 		}
