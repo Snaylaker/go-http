@@ -7,8 +7,6 @@ import (
 	"os"
 	"strconv"
 	"strings"
-
-	"honnef.co/go/tools/printf"
 )
 
 func handleConnection(con net.Conn, path string) {
