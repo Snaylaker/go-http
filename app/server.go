@@ -53,15 +53,9 @@ func handleConnection(con net.Conn, path string) {
 		}
 	} else if strings.HasPrefix(parsedResponse, "POST /files/") {
 		param := strings.Split(parsedResponse, "\r\n")
-		for i, v := range param {
-			fmt.Println("testint", i, v)
-		}
 		tmp := strings.Split(param[0], " ")
-
-		fmt.Print(tmp)
 		url := strings.TrimPrefix(tmp[1], "/files/")
 		filePath := path + `/` + url
-		fmt.Print(filePath)
 		response = "HTTP/1.1 201 OK\r\n\r\n"
 		d1 := []byte(param[6])
 		err := os.WriteFile(filePath, d1, 0644)
@@ -78,7 +72,6 @@ func handleConnection(con net.Conn, path string) {
 func main() {
 	path := flag.String("directory", "tfk", "path to file")
 	flag.Parse()
-	fmt.Println(" path :", *path)
 
 	l, err := net.Listen("tcp", "0.0.0.0:4221")
 	if err != nil {
