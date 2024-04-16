@@ -18,7 +18,13 @@ type HttpResponse struct {
 }
 
 func (r HttpResponse) byte() []byte {
-	response := fmt.Sprintf("%s %d OK\r\n", r.httpVersion, r.httpStatus)
+	var statusText string
+	if r.httpStatus >= 400 && r.httpStatus < 600 {
+		statusText = "Error"
+	} else {
+		statusText = "OK"
+	}
+	response := fmt.Sprintf("%s %d %s\r\n", r.httpVersion, r.httpStatus, statusText)
 	response += fmt.Sprintf("Content-Type: %s\r\n", r.contentType)
 	response += fmt.Sprintf("Content-Length: %d\r\n\r\n", r.contentLength)
 	response += r.body
