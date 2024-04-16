@@ -9,6 +9,32 @@ import (
 	"strings"
 )
 
+type HttpResponse struct {
+	httpVersion   string
+	httpStatus    int
+	contentType   string
+	contentLength int
+	body          string
+}
+
+func (r HttpResponse) byte() []byte {
+	response := fmt.Sprintf("%s %d OK\r\n", r.httpVersion, r.httpStatus)
+	response += fmt.Sprintf("Content-Type: %s\r\n", r.contentType)
+	response += fmt.Sprintf("Content-Length: %d\r\n\r\n", r.contentLength)
+	response += r.body
+	return []byte(response)
+}
+
+type HttpRequest struct {
+	httpVerb string
+	path     string
+}
+
+func toHttpRequest(request string) HttpRequest {
+	param := strings.Split(request, " ")
+	return HttpRequest{httpVerb: param[0], path: param[1]}
+}
+
 func handleConnection(con net.Conn, path string) {
 	defer con.Close()
 
@@ -18,15 +44,21 @@ func handleConnection(con net.Conn, path string) {
 		fmt.Println("Error reading request:", err)
 		return
 	}
-	parsedResponse := string(req[:n])
-	var response string
-	if strings.HasPrefix(parsedResponse, "GET /echo/") {
-		param := strings.Split(parsedResponse, " ")
-		url := strings.TrimPrefix(param[1], "/echo/")
-		response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: " + strconv.Itoa(len(url)) + "\r\n\r\n" + url
-		con.Write([]byte(response))
-	} else if strings.HasPrefix(parsedResponse, "GET /user-agent") {
-		param := strings.Split(parsedResponse, "\r\n")
+	parsedReq := string(req[:n])
+
+	httpRequest := toHttpRequest(parsedReq)
+	if httpRequest.httpVerb == "GET" && strings.HasPrefix(httpRequest.path, "/echo/") {
+		param := strings.TrimPrefix(httpRequest.path, "/echo/")
+		response := HttpResponse{
+			httpVersion:   "HTTP/1.1",
+			httpStatus:    200,
+			contentType:   "text/plain",
+			contentLength: len(param),
+			body:          param,
+		}
+		con.Write(response.byte())
+	} else if strings.HasPrefix(parsedReq, "GET /user-agent") {
+		param := strings.Split(parsedReq, "\r\n")
 		var url string
 		for i, v := range param {
 			if strings.HasPrefix(v, "User-Agent: ") {
@@ -36,11 +68,11 @@ func handleConnection(con net.Conn, path string) {
 		}
 		response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: " + strconv.Itoa(len(url)) + "\r\n\r\n" + url
 		con.Write([]byte(response))
-	} else if strings.Contains(parsedResponse, "GET / ") {
+	} else if strings.Contains(parsedReq, "GET / ") {
 		response = "HTTP/1.1 200 OK\r\n\r\n"
 		con.Write([]byte(response))
-	} else if strings.HasPrefix(parsedResponse, "GET /files/") {
-		param := strings.Split(parsedResponse, " ")
+	} else if strings.HasPrefix(parsedReq, "GET /files/") {
+		param := strings.Split(parsedReq, " ")
 		url := strings.TrimPrefix(param[1], "/files/")
 		filePath := path + `/` + url
 		fi, err := os.ReadFile(filePath)
@@ -51,8 +83,8 @@ func handleConnection(con net.Conn, path string) {
 			response = "HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: " + strconv.Itoa(len(fi)) + "\r\n\r\n"
 			con.Write(append([]byte(response), fi...))
 		}
-	} else if strings.HasPrefix(parsedResponse, "POST /files/") {
-		param := strings.Split(parsedResponse, "\r\n")
+	} else if strings.HasPrefix(parsedReq, "POST /files/") {
+		param := strings.Split(parsedReq, "\r\n")
 		tmp := strings.Split(param[0], " ")
 		url := strings.TrimPrefix(tmp[1], "/files/")
 		filePath := path + `/` + url
