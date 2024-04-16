@@ -13,8 +13,8 @@ type HttpResponse struct {
 	httpVersion   string
 	httpStatus    int
 	contentType   string
-	contentLength int
-	body          string
+	contentLength *int
+	body          *string
 }
 
 func (r HttpResponse) byte() []byte {
@@ -27,7 +27,7 @@ func (r HttpResponse) byte() []byte {
 	response := fmt.Sprintf("%s %d %s\r\n", r.httpVersion, r.httpStatus, statusText)
 	response += fmt.Sprintf("Content-Type: %s\r\n", r.contentType)
 	response += fmt.Sprintf("Content-Length: %d\r\n\r\n", r.contentLength)
-	response += r.body
+	response += *r.body
 	return []byte(response)
 }
 
@@ -55,12 +55,13 @@ func handleConnection(con net.Conn, path string) {
 	httpRequest := toHttpRequest(parsedReq)
 	if httpRequest.httpVerb == "GET" && strings.HasPrefix(httpRequest.path, "/echo/") {
 		param := strings.TrimPrefix(httpRequest.path, "/echo/")
+		length := len(param)
 		response := HttpResponse{
 			httpVersion:   "HTTP/1.1",
 			httpStatus:    200,
 			contentType:   "text/plain",
-			contentLength: len(param),
-			body:          param,
+			contentLength: &length,
+			body:          &param,
 		}
 		con.Write(response.byte())
 	} else if strings.HasPrefix(parsedReq, "GET /user-agent") {
@@ -72,11 +73,22 @@ func handleConnection(con net.Conn, path string) {
 				break
 			}
 		}
-		response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: " + strconv.Itoa(len(url)) + "\r\n\r\n" + url
-		con.Write([]byte(response))
+		length := len(url)
+		response := HttpResponse{
+			httpVersion:   "HTTP/1.1",
+			httpStatus:    200,
+			contentType:   "text/plain",
+			contentLength: &length,
+			body:          &url,
+		}
+		con.Write(response.byte())
 	} else if strings.Contains(parsedReq, "GET / ") {
-		response = "HTTP/1.1 200 OK\r\n\r\n"
-		con.Write([]byte(response))
+		response := HttpResponse{
+			httpVersion: "HTTP/1.1",
+			httpStatus:  200,
+			contentType: "text/plain",
+		}
+		con.Write(response.byte())
 	} else if strings.HasPrefix(parsedReq, "GET /files/") {
 		param := strings.Split(parsedReq, " ")
 		url := strings.TrimPrefix(param[1], "/files/")
