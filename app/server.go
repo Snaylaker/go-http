@@ -3,9 +3,9 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io"
 	"net"
 	"os"
-	"strconv"
 	"strings"
 )
 
@@ -13,8 +13,14 @@ type HttpResponse struct {
 	httpVersion   string
 	httpStatus    int
 	contentType   string
-	contentLength *int
-	body          *string
+	contentLength int
+	body          []byte
+}
+
+type HttpRequest struct {
+	httpVerb  string
+	userAgent string
+	path      string
 }
 
 func (r HttpResponse) byte() []byte {
@@ -27,96 +33,96 @@ func (r HttpResponse) byte() []byte {
 	response := fmt.Sprintf("%s %d %s\r\n", r.httpVersion, r.httpStatus, statusText)
 	response += fmt.Sprintf("Content-Type: %s\r\n", r.contentType)
 	response += fmt.Sprintf("Content-Length: %d\r\n\r\n", r.contentLength)
-	response += *r.body
+	response += string(r.body)
 	return []byte(response)
 }
-
-type HttpRequest struct {
-	httpVerb string
-	path     string
-}
-
 func toHttpRequest(request string) HttpRequest {
-	param := strings.Split(request, " ")
-	return HttpRequest{httpVerb: param[0], path: param[1]}
+	lines := strings.Split(request, "\r\n")
+	firstLine := strings.Split(lines[0], " ")
+	var userAgent string
+	for _, line := range lines {
+		if strings.HasPrefix(line, "User-Agent: ") {
+			userAgent = strings.TrimPrefix(line, "User-Agent: ")
+			break
+		}
+	}
+	return HttpRequest{
+		httpVerb:  firstLine[0],
+		path:      firstLine[1],
+		userAgent: userAgent,
+	}
 }
 
-func handleConnection(con net.Conn, path string) {
-	defer con.Close()
+func handleEchoRequest(path string) HttpResponse {
+	param := strings.TrimPrefix(path, "/echo/")
+	length := len(param)
+	return HttpResponse{
+		httpVersion:   "HTTP/1.1",
+		httpStatus:    200,
+		contentType:   "text/plain",
+		contentLength: length,
+		body:          []byte(param),
+	}
+}
 
-	req := make([]byte, 1024)
-	n, err := con.Read(req)
+func handleFileRequest(path string) (HttpResponse, error) {
+	fileData, err := os.ReadFile(path)
+	if err != nil {
+		return HttpResponse{}, err
+	}
+	return HttpResponse{
+		httpVersion:   "HTTP/1.1",
+		httpStatus:    200,
+		contentType:   "application/octet-stream",
+		contentLength: len(fileData),
+		body:          fileData,
+	}, nil
+}
+
+func handleConnection(conn net.Conn, path string) {
+	defer conn.Close()
+	req, err := io.ReadAll(io.Reader(conn))
 	if err != nil {
 		fmt.Println("Error reading request:", err)
 		return
 	}
-	parsedReq := string(req[:n])
 
-	httpRequest := toHttpRequest(parsedReq)
-	if httpRequest.httpVerb == "GET" && strings.HasPrefix(httpRequest.path, "/echo/") {
-		param := strings.TrimPrefix(httpRequest.path, "/echo/")
-		length := len(param)
-		response := HttpResponse{
-			httpVersion:   "HTTP/1.1",
-			httpStatus:    200,
-			contentType:   "text/plain",
-			contentLength: &length,
-			body:          &param,
-		}
-		con.Write(response.byte())
-	} else if strings.HasPrefix(parsedReq, "GET /user-agent") {
-		param := strings.Split(parsedReq, "\r\n")
-		var url string
-		for i, v := range param {
-			if strings.HasPrefix(v, "User-Agent: ") {
-				url = strings.TrimPrefix(param[i], "User-Agent: ")
-				break
+	httpRequest := toHttpRequest(string(req))
+
+	var response HttpResponse
+
+	switch {
+	case httpRequest.httpVerb == "GET" && strings.HasPrefix(httpRequest.path, "/echo/"):
+		response = handleEchoRequest(httpRequest.path)
+	case httpRequest.httpVerb == "GET" && strings.HasPrefix(httpRequest.path, "/files/"):
+		response, err = handleFileRequest(path + httpRequest.path)
+		if err != nil {
+			response = HttpResponse{
+				httpVersion: "HTTP/1.1",
+				httpStatus:  404,
+				contentType: "text/plain",
+				body:        []byte("File not found"),
 			}
 		}
-		length := len(url)
-		response := HttpResponse{
+	case httpRequest.httpVerb == "GET" && httpRequest.path == "/user-agent":
+		response = HttpResponse{
 			httpVersion:   "HTTP/1.1",
 			httpStatus:    200,
 			contentType:   "text/plain",
-			contentLength: &length,
-			body:          &url,
+			contentLength: len(httpRequest.userAgent),
+			body:          []byte(httpRequest.userAgent),
 		}
-		con.Write(response.byte())
-	} else if strings.Contains(parsedReq, "GET / ") {
-		response := HttpResponse{
-			httpVersion: "HTTP/1.1",
-			httpStatus:  200,
-			contentType: "text/plain",
+	default:
+		response = HttpResponse{
+			httpVersion:   "HTTP/1.1",
+			httpStatus:    404,
+			contentType:   "text/plain",
+			contentLength: 0,
+			body:          []byte("Not found"),
 		}
-		con.Write(response.byte())
-	} else if strings.HasPrefix(parsedReq, "GET /files/") {
-		param := strings.Split(parsedReq, " ")
-		url := strings.TrimPrefix(param[1], "/files/")
-		filePath := path + `/` + url
-		fi, err := os.ReadFile(filePath)
-		if err != nil {
-			response = "HTTP/1.1 404 Not Found\r\n\r\n"
-			con.Write([]byte(response))
-		} else {
-			response = "HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: " + strconv.Itoa(len(fi)) + "\r\n\r\n"
-			con.Write(append([]byte(response), fi...))
-		}
-	} else if strings.HasPrefix(parsedReq, "POST /files/") {
-		param := strings.Split(parsedReq, "\r\n")
-		tmp := strings.Split(param[0], " ")
-		url := strings.TrimPrefix(tmp[1], "/files/")
-		filePath := path + `/` + url
-		response = "HTTP/1.1 201 OK\r\n\r\n"
-		d1 := []byte(param[6])
-		err := os.WriteFile(filePath, d1, 0644)
-		if err != nil {
-			response = "HTTP/1.1 404 Not Found\r\n\r\n"
-		}
-		con.Write([]byte(response))
-	} else {
-		response = "HTTP/1.1 404 Not Found\r\n\r\n"
-		con.Write([]byte(response))
 	}
+
+	conn.Write(response.byte())
 }
 
 func main() {
@@ -133,11 +139,11 @@ func main() {
 	fmt.Println("Server started, listening on port 4221")
 
 	for {
-		con, err := l.Accept()
+		conn, err := l.Accept()
 		if err != nil {
 			fmt.Println("Error accepting connection:", err)
 			continue
 		}
-		go handleConnection(con, *path)
+		go handleConnection(conn, *path)
 	}
 }
